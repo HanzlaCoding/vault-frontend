@@ -2,12 +2,12 @@ import { useState } from "react";
 import axios from "axios";
 import Toast from "./Toast.jsx";
 
-const MainForm = () => {
+const MainForm = ({onLoginSuccess}) => {
   const [mode, setMode] = useState("login"); // 'login' | 'register'
   const [toast, setToast] = useState(null);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
-  const [, setUser] = useState(() => {
+  const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem("vault_user");
     return savedUser ? JSON.parse(savedUser) : null;
   });
@@ -15,7 +15,7 @@ const MainForm = () => {
   const handleChange = (e) =>
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
@@ -30,38 +30,38 @@ const MainForm = () => {
         withCredentials: true,
       });
 
+      console.log("Server response:", res.data);
+
       if (mode === "login") {
         setToast({
           type: "success",
           message: res.data?.message || "Welcome back to Vault.",
         });
 
-        // 1. Session is only established on explicit LOGIN
+        // Construct session object
         const userData = {
           email: formData.email,
-          token: res.data.token,
+          token: res.data?.token,
         };
 
+        // 1. Save to browser storage
         localStorage.setItem("vault_user", JSON.stringify(userData));
 
-        // 2. Trigger the view switch to <Dashboard />
-        if (typeof setUser === "function") {
-          setUser(userData);
+        // 2. Trigger parent App state change
+        if (typeof onLoginSuccess === "function") {
+          onLoginSuccess(userData);
         }
       } else {
-        // REGISTRATION FLOW:
+        // Register flow: switch user to login view
         setToast({
           type: "success",
-          message:
-            res.data?.message ||
-            "Account created successfully. Please sign in.",
+          message: res.data?.message || "Account created successfully. Please sign in.",
         });
-
-        // Clear password field and switch tab to login
         setFormData((prev) => ({ ...prev, password: "" }));
         setMode("login");
       }
     } catch (err) {
+      console.error("Auth error:", err);
       setToast({
         type: "error",
         message:
