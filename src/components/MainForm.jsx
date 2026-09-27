@@ -23,6 +23,8 @@ const MainForm = () => {
         ? `${import.meta.env.VITE_BASE_URL}/api/v0/auth/login`
         : `${import.meta.env.VITE_BASE_URL}/api/v0/auth/register`;
 
+    console.log(import.meta.env.VITE_BASE_URL);
+
     try {
       const res = await axios.post(endpoint, formData, {
         withCredentials: true,
