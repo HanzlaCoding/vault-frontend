@@ -18,34 +18,47 @@ const MainForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const baseUrl = import.meta.env.VITE_BASE_URL || "http://localhost:3000";
     const endpoint =
       mode === "login"
-        ? `${import.meta.env.VITE_BASE_URL}/api/v0/auth/login`
-        : `${import.meta.env.VITE_BASE_URL}/api/v0/auth/register`;
-
-    console.log(import.meta.env.VITE_BASE_URL);
+        ? `${baseUrl}/api/v0/auth/login`
+        : `${baseUrl}/api/v0/auth/register`;
 
     try {
       const res = await axios.post(endpoint, formData, {
         withCredentials: true,
       });
 
-      setToast({
-        type: "success",
-        message:
-          res.data?.message ||
-          (mode === "login"
-            ? "Welcome back to Vault."
-            : "Account created successfully."),
-      });
+      if (mode === "login") {
+        setToast({
+          type: "success",
+          message: res.data?.message || "Welcome back to Vault.",
+        });
 
-      console.log(res);
+        // 1. Session is only established on explicit LOGIN
+        const userData = {
+          email: formData.email,
+          token: res.data.token,
+        };
 
-      const userData = { email: formData.email, token: res.data.token };
-      localStorage.setItem("vault_user", JSON.stringify(userData));
-      setUser(userData);
+        localStorage.setItem("vault_user", JSON.stringify(userData));
 
-      if (mode === "register") {
+        // 2. Trigger the view switch to <Dashboard />
+        if (typeof setUser === "function") {
+          setUser(userData);
+        }
+      } else {
+        // REGISTRATION FLOW:
+        setToast({
+          type: "success",
+          message:
+            res.data?.message ||
+            "Account created successfully. Please sign in.",
+        });
+
+        // Clear password field and switch tab to login
+        setFormData((prev) => ({ ...prev, password: "" }));
         setMode("login");
       }
     } catch (err) {

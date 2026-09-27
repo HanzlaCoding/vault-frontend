@@ -1,12 +1,15 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Dashboard from "./components/Dashboard";
 import MainForm from "./components/MainForm";
-// ... other imports
 
 export default function App() {
   const [user, setUser] = useState(() => {
-    const cached = localStorage.getItem("vault_user");
-    return cached ? JSON.parse(cached) : null;
+    try {
+      const cached = localStorage.getItem("vault_user");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
   });
 
   const handleLoginSuccess = (userData) => {
@@ -23,9 +26,5 @@ export default function App() {
     return <Dashboard user={user} onLogout={handleLogout} />;
   }
 
-  // Otherwise render your existing Auth Screen
-  return (
-    // Your Auth component JSX with handleLoginSuccess attached to your login response
-    <MainForm onLoginSuccess={handleLoginSuccess} />
-  );
+  return <MainForm onLoginSuccess={handleLoginSuccess} />;
 }
